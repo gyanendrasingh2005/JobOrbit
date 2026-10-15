@@ -30,6 +30,7 @@ const corsOptions = {
             "http://localhost:5173",
             "http://localhost:5174",
             "http://localhost:3000",
+            "https://job-orbit-nobf.vercel.app",
             "https://career-connect-xzga-uz3ziwahf.vercel.app",
             "https://career-connect-xzga.vercel.app",
         ];
