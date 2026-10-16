@@ -1,9 +1,8 @@
 import React from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Briefcase, ArrowUpRight, Github, Linkedin, Twitter, Mail, ShieldCheck } from 'lucide-react'
 
 const Footer = () => {
-    const navigate = useNavigate()
 
     return (
         <footer className="bg-white border-t border-gray-200/80 pt-16 pb-12">

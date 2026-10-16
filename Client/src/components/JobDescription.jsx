@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 import Navbar from './shared/Navbar'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Bookmark } from 'lucide-react'
+import { Bookmark, Loader2 } from 'lucide-react'
 
 // Custom markdown components for rich formatting
 // Custom markdown components for rich, distinct formatting
@@ -154,7 +154,7 @@ const normalizeDescription = (raw) => {
   })
 
   // 4. Skills extraction: "Required Skills JavaScriptJavaReact..."
-  text = text.replace(/Required\s*Skills\s+([A-Za-z0-9\s\/\-_.,]+?)(?=(?:Qualifications|Responsibilities|Requirements|About|$))/i, (m, skillStr) => {
+  text = text.replace(/Required\s*Skills\s+([A-Za-z0-9\s/\-_.,]+?)(?=(?:Qualifications|Responsibilities|Requirements|About|$))/i, (m, skillStr) => {
     const knownSkills = [
       'JavaScript', 'TypeScript', 'React', 'Node.js', 'Java', 'Python',
       'UX/UI Design', 'REST API', 'GraphQL', 'CSS', 'HTML', 'AWS', 'Azure', 'GCP',
@@ -325,12 +325,18 @@ const JobDescription = () => {
   const params = useParams()
   const jobId = params.id
 
-  const isInitiallyApplied =
-    singleJob?.applications?.some(
-      application => application.applicant === user?._id
-    ) || false
+  const checkHasApplied = (applicationsList, userId) => {
+    if (!Array.isArray(applicationsList) || !userId) return false
+    return applicationsList.some((app) => {
+      const applicantId = app?.applicant?._id || app?.applicant
+      return applicantId?.toString() === userId?.toString()
+    })
+  }
+
+  const isInitiallyApplied = checkHasApplied(singleJob?.applications, user?._id)
 
   const [isApplied, setIsApplied] = useState(isInitiallyApplied)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const isBookmarked = user?.bookmarks?.some(
     (id) => (typeof id === 'string' ? id : id?._id) === jobId
@@ -361,7 +367,30 @@ const JobDescription = () => {
   }
 
   const applyJobHandler = async () => {
+    if (!user) {
+      toast.error("Please log in to apply for this job")
+      navigate("/login")
+      return
+    }
+
+    if (user.role === "recruiter") {
+      toast.error("Recruiters cannot apply for jobs. Please switch to a job seeker account.")
+      return
+    }
+
+    if (!user.profile?.resume) {
+      toast.error("Resume Required to Apply", {
+        description: "Employers require a resume on file before reviewing your application. Please upload your resume in your profile.",
+        action: {
+          label: "Go to Profile",
+          onClick: () => navigate("/profile"),
+        },
+      })
+      return
+    }
+
     try {
+      setIsSubmitting(true)
       const response = await axios.post(
         `${APPLICANT_API_END_POINT}/apply/${jobId}`,
         {},
@@ -369,19 +398,34 @@ const JobDescription = () => {
       )
       if (response.data.success) {
         setIsApplied(true)
+        const currentCount = singleJob?.applicantCount ?? singleJob?.applications?.length ?? 0
         const updatedSingleJob = {
           ...singleJob,
+          applicantCount: currentCount + 1,
           applications: [
-            ...singleJob.applications,
-            { applicant: user?._id },
+            ...(singleJob?.applications || []),
+            { applicant: { _id: user?._id, fullname: user?.fullname, email: user?.email } },
           ],
         }
         dispatch(setSingleJob(updatedSingleJob))
-        toast.success(response.data.message)
+        toast.success(response.data.message || "Application submitted successfully!")
       }
     } catch (error) {
-      console.log(error)
-      toast.error(error.response.data.message)
+      console.error("Apply error:", error)
+      const msg = error.response?.data?.message || "Failed to submit application"
+      if (error.response?.data?.missingResume) {
+        toast.error("Resume Required", {
+          description: "Please upload your resume in your profile before applying.",
+          action: {
+            label: "Go to Profile",
+            onClick: () => navigate("/profile"),
+          },
+        })
+      } else {
+        toast.error(msg)
+      }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -394,11 +438,7 @@ const JobDescription = () => {
         )
         if (response.data.success) {
           dispatch(setSingleJob(response.data.job))
-          setIsApplied(
-            response.data.job.applications.some(
-              application => application.applicant === user?._id
-            )
-          )
+          setIsApplied(checkHasApplied(response.data.job?.applications, user?._id))
         }
       } catch (error) {
         console.error(error)
@@ -447,15 +487,26 @@ const JobDescription = () => {
               <span>{isBookmarked ? 'Saved' : 'Save for Later'}</span>
             </Button>
             <Button
-              onClick={isApplied ? null : applyJobHandler}
-              disabled={isApplied}
-              className={`rounded-lg ${
+              onClick={isApplied || isSubmitting ? null : applyJobHandler}
+              disabled={isApplied || isSubmitting}
+              className={`rounded-lg flex items-center justify-center ${
                 isApplied
-                  ? 'bg-gray-600 cursor-not-allowed'
-                  : 'bg-[#7209b7] hover:bg-[#5f08ad] cursor-pointer'
+                  ? 'bg-gray-600 cursor-not-allowed text-white'
+                  : isSubmitting
+                  ? 'bg-[#7209b7]/70 text-white cursor-wait'
+                  : 'bg-[#7209b7] hover:bg-[#5f08ad] cursor-pointer text-white'
               }`}
             >
-              {isApplied ? 'Applied' : 'Apply Now'}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin mr-1.5" />
+                  Submitting...
+                </>
+              ) : isApplied ? (
+                'Applied'
+              ) : (
+                'Apply Now'
+              )}
             </Button>
           </div>
         </div>

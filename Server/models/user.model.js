@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
         skills: [{ type: String }],
         resume: { type: String },  // url for resume
         resumeOriginalName: { type: String },
+        resumeFileId: { type: mongoose.Schema.Types.ObjectId },
+        resumeFileKey: { type: String },
+        resumeUploadedAt: { type: Date },
+        resumeContentType: { type: String, default: "application/pdf" },
+        resumeSize: { type: Number },
         company: { type: mongoose.Schema.Types.ObjectId, ref: "Company" },
         profilePhoto: {
             type: String,

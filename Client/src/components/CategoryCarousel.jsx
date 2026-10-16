@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from './ui/carousel'
 import { Button } from './ui/button'
 import { useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import { setSearchedQuery } from '@/redux/jobSlice'
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
 
 
 const category = [

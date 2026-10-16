@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Button } from '../ui/button'
@@ -10,7 +10,7 @@ import axios from 'axios'
 import { USER_API_END_POINT } from '@/utils/constant'
 import { setUser, setToken } from '@/redux/authSlice'
 import { setSearchedQuery } from '@/redux/jobSlice'
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
 
 const Navbar = () => {
     const dispatch = useDispatch();
@@ -56,14 +56,22 @@ const Navbar = () => {
                             user && user.role === "recruiter"
                                 ?
                                 <>
-                                    <li><Link to="/admin/companies">Companies</Link></li>
+                                    <li><Link to="/admin/dashboard" className="text-purple-600 font-semibold hover:text-purple-700">Dashboard</Link></li>
                                     <li><Link to="/admin/jobs">Jobs</Link></li>
+                                    <li><Link to="/admin/companies">Companies</Link></li>
                                 </>
                                 : (
                                     <>
                                         <motion.li onClick={resetQuery}><Link to="/">Home</Link></motion.li>
                                         <li onClick={resetQuery}><Link to="/jobs">Jobs</Link></li>
                                         <li onClick={resetQuery}><Link to="/browse">Browse</Link></li>
+                                        {user && (
+                                            <li>
+                                                <Link to="/dashboard" className="text-purple-600 font-semibold hover:text-purple-700">
+                                                    Dashboard
+                                                </Link>
+                                            </li>
+                                        )}
                                     </>
                                 )
                         }
@@ -85,7 +93,7 @@ const Navbar = () => {
                             <div>
                                 <Popover>
                                     <PopoverTrigger asChild>
-                                        <Avatar className="cursor-pointer">
+                                        <Avatar className="cursor-pointer ring-2 ring-purple-100 hover:ring-purple-300 transition-all">
                                             {
                                                 user?.profile?.profilePhoto
                                                     ?
@@ -120,7 +128,11 @@ const Navbar = () => {
                                                     (
                                                         <>
                                                             <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                                <User2 />
+                                                                <BriefcaseBusiness className="w-4 h-4 ml-1 text-purple-600" />
+                                                                <Button className="cursor-pointer text-purple-700 font-semibold" variant="link"><Link to="/dashboard">Application Dashboard</Link></Button>
+                                                            </div>
+                                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
+                                                                <User2 className="w-4 h-4 ml-1" />
                                                                 <Button className="cursor-pointer" variant="link"><Link to="/profile">View Profile</Link></Button>
                                                             </div>
                                                             <div className='flex w-fit items-center gap-2 cursor-pointer'>
@@ -130,10 +142,25 @@ const Navbar = () => {
                                                         </>
                                                     )
                                                 }
+                                                {
+                                                    user && user?.role === "recruiter" &&
+                                                    (
+                                                        <>
+                                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
+                                                                <BriefcaseBusiness className="w-4 h-4 ml-1 text-purple-600" />
+                                                                <Button className="cursor-pointer text-purple-700 font-semibold" variant="link"><Link to="/admin/dashboard">Recruiter Dashboard</Link></Button>
+                                                            </div>
+                                                            <div className='flex w-fit items-center gap-2 cursor-pointer'>
+                                                                <BuildingIcon className="w-4 h-4 ml-1" />
+                                                                <Button className="cursor-pointer" variant="link"><Link to="/admin/companies">Companies</Link></Button>
+                                                            </div>
+                                                        </>
+                                                    )
+                                                }
 
                                                 <div className='flex w-fit items-center gap-2 cursor-pointer'>
-                                                    <LogOut />
-                                                    <Button onClick={logoutHandler} className="cursor-pointer" variant="link">Logout</Button>
+                                                    <LogOut className="w-4 h-4 ml-1 text-rose-500" />
+                                                    <Button onClick={logoutHandler} className="cursor-pointer text-rose-600" variant="link">Logout</Button>
                                                 </div>
                                             </div>
                                         </div>
@@ -157,14 +184,17 @@ const Navbar = () => {
                                         user && user.role === "recruiter"
                                             ?
                                             <div className='flex flex-col gap-3'>
-                                                <div onClick={() => navigate("/admin/companies")} className='flex items-center gap-3'>
-                                                    <BuildingIcon className='size-5' />
-                                                    <p className='text-lg font-medium cursor-pointer'>Companies</p>
+                                                <div onClick={() => navigate("/admin/dashboard")} className='flex items-center gap-3 cursor-pointer text-purple-700 font-semibold'>
+                                                    <BriefcaseBusiness className='size-5 text-purple-600' />
+                                                    <p className='text-lg font-medium'>Dashboard</p>
                                                 </div>
-
                                                 <div onClick={() => navigate("/admin/jobs")} className='flex items-center gap-3 cursor-pointer'>
                                                     <BriefcaseBusiness />
-                                                    <p className='text-lg font-medium' to="/admin/jobs">Jobs</p>
+                                                    <p className='text-lg font-medium'>Jobs</p>
+                                                </div>
+                                                <div onClick={() => navigate("/admin/companies")} className='flex items-center gap-3 cursor-pointer'>
+                                                    <BuildingIcon className='size-5' />
+                                                    <p className='text-lg font-medium'>Companies</p>
                                                 </div>
                                             </div>
                                             : (
@@ -180,9 +210,16 @@ const Navbar = () => {
                                                             <p className='text-lg font-medium'>Home</p>
                                                         </div>
 
+                                                        {user && (
+                                                            <div onClick={() => navigate("/dashboard")} className='flex items-center gap-3 cursor-pointer text-purple-700 font-semibold'>
+                                                                <BriefcaseBusiness className="size-5 text-purple-600" />
+                                                                <p className='text-lg font-medium'>Dashboard</p>
+                                                            </div>
+                                                        )}
+
                                                         <div onClick={() => navigate("/jobs")} className='flex items-center gap-3 cursor-pointer'>
                                                             <BriefcaseBusiness />
-                                                            <p className='text-lg font-medium' to="/admin/jobs">Jobs</p>
+                                                            <p className='text-lg font-medium'>Jobs</p>
                                                         </div>
 
                                                         <div
@@ -192,7 +229,7 @@ const Navbar = () => {
                                                             }}
                                                             className='flex items-center gap-3 cursor-pointer'>
                                                             <SearchCheck />
-                                                            <p className='text-lg font-medium' to="/admin/jobs">Browse</p>
+                                                            <p className='text-lg font-medium'>Browse</p>
                                                         </div>
                                                     </div>
 

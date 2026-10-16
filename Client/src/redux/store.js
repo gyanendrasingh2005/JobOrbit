@@ -6,7 +6,6 @@ import applicationSlice from "./applicationSlice";
 
 
 import {
-    persistStore,
     persistReducer,
     FLUSH,
     REHYDRATE,

@@ -45,19 +45,26 @@ Students and job seekers can explore curated technical roles, bookmark opportuni
 - 📄 **Rich Job Details** — Markdown-formatted job specs, salary breakdowns, requirements, and single-click apply
 - 🔖 **Saved & Bookmarked Jobs** — Bookmark high-priority roles to review and apply anytime
 - 👤 **Interactive Profile Management** — Editable bio, skills chips, Cloudinary PDF resume preview, and instant avatar upload
-- 📋 **Application Tracker** — Real-time tracking of submitted applications with status badges (`Pending`, `Accepted`, `Rejected`)
+- 📊 **Dynamic Job Seeker Dashboard (`/dashboard`)** — Real-time tracking of applications, pipeline metrics (Total, Under Review, Shortlisted, Interviews, Selected, Rejected)
+- 🚀 **Visual Dynamic Timeline** — Step-by-step progress tracking (`Applied → Under Review → Shortlisted → Interview Scheduled → Selected/Rejected`) powered by backend audit history
+- 🗓️ **Interview Management & Joining** — Upcoming interview calendar with local timezone support, duration, instructions, and one-click "Join Interview" for video meetings
+- 📧 **Automated Email Notifications** — Instant confirmation emails when applying, status updates, interview invitations, and reminders
 
 ### 🏢 Recruiter / Employer
 - 🏗️ **Company Profile Management** — Register and configure company presence with logos, website URLs, and company descriptions
 - 📝 **Structured Job Posting** — Publish detailed job openings including qualifications, role type, salary range, and position quotas
+- 📊 **Recruiter Command Dashboard (`/admin/dashboard`)** — Real-time candidate analytics, review queues, and upcoming interview agendas
 - ✏️ **Full Job Lifecycle Control** — Edit, update, and manage job visibility and details directly from an administrative table
 - 👥 **Applicant Review Pipeline** — Inspect candidate profiles, review uploaded resumes, and filter applications per job listing
-- 📊 **Status Decision Workflow** — Seamlessly approve or reject applicant submissions
+- 🚦 **Multi-Stage Status Workflow** — Transition applicants between `Under Review`, `Shortlisted`, `Selected`, and `Rejected` with private internal notes
+- 📅 **Interview Scheduling Engine** — Schedule, reschedule, and cancel interviews with date/time, timezone, online/in-person formats, and meeting URLs
+- ⏰ **Automated 24h & 1h Reminders** — Background scheduler automatically notifies candidates 24 hours and 1 hour before scheduled interviews without external dependencies
 - 🔒 **Role-Guarded Dashboards** — Frontend route protection and backend JWT verification for recruiter-only endpoints
 
 ### 🌐 Platform & Architecture
-- 🎨 **Modern Design System** — Tailwind CSS v4, smooth responsive layouts, glassmorphic accents, and Framer Motion micro-interactions
-- 🔐 **Secure JWT Authentication** — Secure token transmission and session handling with `httpOnly` cookies
+- 📧 **Gmail OAuth2 & Nodemailer Engine** — Reusable transactional email service with branded responsive HTML templates, deduplication, and safe error logging
+- 🎨 **Modern Design System** — Tailwind CSS, responsive layouts, glassmorphic accents, and Framer Motion micro-interactions
+- 🔐 **Secure JWT Authentication** — Secure token transmission and session handling with `httpOnly` cookies or Bearer headers
 - ☁️ **Cloud Media Storage** — Cloudinary integration for resume documents and profile pictures
 - ⚡ **Serverless-Optimized Database Layer** — Mongoose connection caching engineered for Vercel serverless cold starts
 - 🛡️ **Cross-Origin Security (CORS)** — Automated origin validation supporting local development and `*.vercel.app` preview deployments
@@ -253,6 +260,10 @@ cd JobOrbit
 | `CLOUDINARY_API_KEY` | Cloudinary access API key | `1234567890` |
 | `CLOUDINARY_SECRET_KEY` | Cloudinary API secret | `abcde12345` |
 | `FRONTEND_URL` | Production/staging frontend URL for CORS | `https://joborbit.vercel.app` |
+| `EMAIL_USER` | Gmail address for sending notifications | `your-company@gmail.com` |
+| `CLIENT_ID` | Google Cloud OAuth2 Client ID | `your-google-client-id.apps.googleusercontent.com` |
+| `CLIENT_SECRET` | Google Cloud OAuth2 Client Secret | `your-google-client-secret` |
+| `REFRESH_TOKEN` | Google Cloud OAuth2 Refresh Token | `1//04your-oauth-refresh-token` |
 
 ### Client (`Client/.env`)
 | Variable | Description | Example |
@@ -280,7 +291,7 @@ cd JobOrbit
 | `GET` | `/get` | Fetch all active jobs with optional search filters | No |
 | `GET` | `/get/:id` | Fetch specific job details and specifications | No |
 | `POST` | `/post` | Create a new job listing | Yes (Recruiter) |
-| `GET` | `/getadminjobs` | Fetch all jobs posted by the logged-in recruiter | Yes (Recruiter) |
+| `GET` | `/get-recruiter-job` | Fetch all jobs posted by the logged-in recruiter | Yes (Recruiter) |
 | `PUT` | `/update/:id` | Update an existing job opening | Yes (Recruiter) |
 | `DELETE` | `/delete/:id` | Remove a job listing | Yes (Recruiter) |
 
@@ -295,10 +306,23 @@ cd JobOrbit
 ### Applications (`/api/v1/application`)
 | Method | Endpoint | Description | Auth Required |
 |---|---|---|---|
-| `POST` | `/apply/:id` | Submit an application for a job | Yes (Student) |
-| `GET` | `/get` | Retrieve all applications submitted by candidate | Yes (Student) |
-| `GET` | `/getapplicants/:id` | Fetch applicants for a specific job listing | Yes (Recruiter) |
-| `PUT` | `/status/:id/update` | Update applicant status (`Accepted` / `Rejected`) | Yes (Recruiter) |
+| `POST` | `/apply/:id` | Submit an application for a job (triggers email confirmation) | Yes (Student) |
+| `GET` | `/get` | Retrieve all applications submitted by candidate with timeline | Yes (Student) |
+| `GET` | `/seeker/stats` | Retrieve candidate dashboard statistics | Yes (Student) |
+| `GET` | `/details/:id` | Retrieve application details and full audit history | Yes |
+| `GET` | `/recruiter/stats` | Retrieve recruiter dashboard statistics | Yes (Recruiter) |
+| `GET` | `/:id/applicants` | Fetch applicants for a specific recruiter's job | Yes (Recruiter) |
+| `POST` | `/status/:id/update` | Transition applicant status (`Under Review`, `Shortlisted`, `Selected`, `Rejected`) with notes | Yes (Recruiter) |
+| `POST` | `/:id/retry-email` | Retry sending confirmation email upon delivery failure | Yes |
+
+### Interviews (`/api/v1/interview`)
+| Method | Endpoint | Description | Auth Required |
+|---|---|---|---|
+| `POST` | `/schedule` | Schedule candidate interview (sends email invitation) | Yes (Recruiter) |
+| `PUT` | `/:id/reschedule` | Reschedule interview date/time (sends reschedule notice) | Yes (Recruiter) |
+| `PUT` | `/:id/cancel` | Cancel interview (sends cancellation notice and clears reminders) | Yes (Recruiter) |
+| `GET` | `/my-interviews` | Fetch user's upcoming/past interviews (candidate or recruiter) | Yes |
+| `GET` | `/application/:applicationId` | Retrieve interviews for a specific application | Yes |
 
 ---
 

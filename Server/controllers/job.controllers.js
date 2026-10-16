@@ -1,12 +1,13 @@
 import { Job } from "../models/job.models.js";
 import { Application } from "../models/application.models.js";
+import { Company } from "../models/company.models.js";
 
 
 // role === "recruiter"
 
 export const postJob = async (req, res) => {
     try {
-        const { title, description, location, requirements, salary, jobType, experience, position, companyId } = req.body;
+        const { title, description, location, requirements, salary, jobType, experience, position, companyId, totalRounds, interviewRounds } = req.body;
 
         const userId = req.id;
 
@@ -15,6 +16,22 @@ export const postJob = async (req, res) => {
                 message: "Something is missing",
                 success: false,
             })
+        }
+
+        const parsedTotalRounds = totalRounds ? Math.max(1, Math.min(10, Number(totalRounds))) : 3;
+        let parsedInterviewRounds = [];
+        if (Array.isArray(interviewRounds) && interviewRounds.length > 0) {
+            parsedInterviewRounds = interviewRounds.map((r, idx) => ({
+                roundNumber: idx + 1,
+                name: typeof r === "string" ? r.trim() : (r.name ? r.name.trim() : `Round ${idx + 1}`),
+                description: typeof r === "object" ? (r.description || "") : "",
+            }));
+        } else {
+            parsedInterviewRounds = Array.from({ length: parsedTotalRounds }, (_, i) => ({
+                roundNumber: i + 1,
+                name: `Round ${i + 1}`,
+                description: "",
+            }));
         }
 
         const job = await Job.create({
@@ -28,6 +45,8 @@ export const postJob = async (req, res) => {
             position,
             company: companyId,
             created_by: userId,
+            totalRounds: parsedInterviewRounds.length || parsedTotalRounds,
+            interviewRounds: parsedInterviewRounds,
         });
 
         return res.status(201).json({
@@ -37,7 +56,11 @@ export const postJob = async (req, res) => {
         })
 
     } catch (error) {
-        console.log(error);
+        console.error("PostJob Error:", error);
+        return res.status(500).json({
+            message: error.message || "Failed to create job",
+            success: false,
+        });
     }
 }
 
@@ -85,28 +108,43 @@ export const getJobById = async (req, res) => {
     try {
         const jobId = req.params.id;
 
-        const job = await Job.findById(jobId).populate(
-            {
-                path: "applications",
-            }
-        );
+        const job = await Job.findById(jobId).populate("company");
         if (!job) {
-            res.status(404).json({
+            return res.status(404).json({
                 message: "Job not found",
                 success: false,
-            })
+            });
+        }
+
+        // Accurately query applications from the primary Application collection
+        const applications = await Application.find({ job: jobId })
+            .select("_id applicant status createdAt")
+            .populate("applicant", "fullname email");
+
+        // Keep job document applications array consistent
+        const appIds = applications.map((a) => a._id);
+        if (job.applications?.length !== appIds.length) {
+            job.applications = appIds;
+            await job.save().catch(() => {});
         }
 
         return res.status(200).json({
             message: "Job found",
-            job,
+            job: {
+                ...job.toObject(),
+                applications,
+                applicantCount: applications.length,
+            },
             success: true,
-        })
-
+        });
     } catch (error) {
-        console.log(error);
+        console.error("GetJobById error:", error.message);
+        return res.status(500).json({
+            message: error.message || "Failed to retrieve job",
+            success: false,
+        });
     }
-}
+};
 
 
 // role === "recruiter"
@@ -114,34 +152,53 @@ export const getJobById = async (req, res) => {
 export const getRecruiterJobs = async (req, res) => {
     try {
         const recruiterId = req.id;
-        const jobs = await Job.find({ created_by: recruiterId }).populate(
-            {
-                path: "company",
-                createdAt: -1,
-            }
-        );
-        if (!jobs) {
-            return res.status(404).json({
-                message: "No jobs found",
-                success: false,
-            })
-        }
+
+        // Find companies owned by recruiter
+        const userCompanies = await Company.find({ userId: recruiterId }).select("_id");
+        const companyIds = userCompanies.map((c) => c._id);
+
+        const jobs = await Job.find({
+            $or: [
+                { created_by: recruiterId },
+                { company: { $in: companyIds } },
+            ],
+        })
+            .populate("company")
+            .sort({ createdAt: -1 });
+
+        // Calculate accurate real-time applicant counts for each job
+        const jobIds = jobs.map((j) => j._id);
+        const appCounts = await Application.aggregate([
+            { $match: { job: { $in: jobIds } } },
+            { $group: { _id: "$job", count: { $sum: 1 } } },
+        ]);
+
+        const countMap = {};
+        appCounts.forEach((ac) => {
+            countMap[ac._id.toString()] = ac.count;
+        });
+
+        const enrichedJobs = jobs.map((job) => {
+            const jObj = job.toObject();
+            const realCount = countMap[job._id.toString()] || 0;
+            jObj.applicantCount = realCount;
+            jObj.totalApplicants = realCount;
+            return jObj;
+        });
 
         return res.status(200).json({
-            message: "Jobs found",
-            jobs,
+            message: enrichedJobs.length > 0 ? "Jobs found" : "No jobs found",
+            jobs: enrichedJobs,
             success: true,
-        })
-
-
+        });
     } catch (error) {
-        console.log(error);
+        console.error("GetRecruiterJobs Error:", error);
         return res.status(500).json({
             message: error.message || "Failed to fetch recruiter jobs",
             success: false,
         });
     }
-}
+};
 
 // Update Job (Recruiter only)
 export const updateJob = async (req, res) => {

@@ -5,7 +5,7 @@ import Job from './Job'
 import { useDispatch, useSelector } from 'react-redux'
 import { setSearchedQuery } from '@/redux/jobSlice'
 import useGetAllJobs from '@/hooks/useGetAllJobs'
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion'
 
 // const jobs = [
 //     1, 2, 3, 4, 5, 6, 7, 8, 9, 10

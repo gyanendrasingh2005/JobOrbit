@@ -8,14 +8,13 @@ import axios from 'axios';
 import { COMPANY_API_END_POINT } from '@/utils/constant';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { useDispatch, useSelector } from 'react-redux';
+import { useSelector } from 'react-redux';
 import useGetCompanyById from '@/hooks/useGetCompanyById';
 
 const CompanySetup = () => {
 
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const dispatch = useDispatch();
 
     const params = useParams();
     const companyId = params.id;

@@ -1,5 +1,10 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
+import "../models/user.model.js";
+import "../models/company.models.js";
+import "../models/job.models.js";
+import "../models/application.models.js";
+import "../models/interview.models.js";
 
 dotenv.config();
 

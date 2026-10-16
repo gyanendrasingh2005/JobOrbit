@@ -9,6 +9,7 @@ companyRouter.post("/register", authUser, registerCompany);
 companyRouter.get("/get", authUser, getCompanyDetailsByUser);
 companyRouter.get("/get/:id", authUser, getCompanyDetailsById);
 companyRouter.post("/update/:id", authUser, singleUpload, updateCompany);
+companyRouter.put("/update/:id", authUser, singleUpload, updateCompany);
 
 
 export default companyRouter;

@@ -45,7 +45,20 @@ const jobSchema = new mongoose.Schema({
     applications: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Application",
-    }]
+    }],
+    totalRounds: {
+        type: Number,
+        default: 3,
+        min: 1,
+        max: 10,
+    },
+    interviewRounds: [
+        {
+            roundNumber: { type: Number },
+            name: { type: String },
+            description: { type: String, default: "" },
+        }
+    ]
 
 
 }, { timestamps: true })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from './ui/dialog'
 import { Label } from './ui/label'
 import { Input } from './ui/input'
@@ -22,9 +22,22 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
         email: user?.email || "",
         phoneNumber: user?.phoneNumber || "",
         bio: user?.profile?.bio || "",
-        skills: user?.profile?.skills?.join(", ") || "",
+        skills: Array.isArray(user?.profile?.skills) ? user.profile.skills.join(", ") : (user?.profile?.skills || ""),
         file: null,  // resume file
     });
+
+    useEffect(() => {
+        if (open && user) {
+            setInput({
+                fullname: user?.fullname || "",
+                email: user?.email || "",
+                phoneNumber: user?.phoneNumber || "",
+                bio: user?.profile?.bio || "",
+                skills: Array.isArray(user?.profile?.skills) ? user.profile.skills.join(", ") : (user?.profile?.skills || ""),
+                file: null,
+            });
+        }
+    }, [open, user]);
 
     const changeEventHandler = (e) => {
         setInput({ ...input, [e.target.name]: e.target.value });
@@ -32,6 +45,28 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
 
     const fileChangeHandler = (e) => {
         const file = e.target.files?.[0];
+        if (!file) return;
+
+        const MAX_SIZE = 5 * 1024 * 1024;
+        if (file.size > MAX_SIZE) {
+            toast.error(`File size exceeds 5 MB limit (${(file.size / (1024 * 1024)).toFixed(2)} MB). Please select a file under 5 MB.`);
+            e.target.value = '';
+            return;
+        }
+
+        const allowedExtensions = ['.pdf', '.doc', '.docx'];
+        const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        const allowedMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ];
+        if (!allowedExtensions.includes(ext) && !allowedMimes.includes(file.type)) {
+            toast.error('Unsupported file format. Only PDF and Word documents (.doc, .docx) are allowed.');
+            e.target.value = '';
+            return;
+        }
+
         setInput({ ...input, file });
     }
 
@@ -178,14 +213,14 @@ const UpdateProfileDialog = ({ open, setOpen }) => {
                         <div className="space-y-1.5">
                             <Label htmlFor="file" className="text-sm font-semibold text-gray-700 flex items-center gap-1.5">
                                 <FileText className="w-3.5 h-3.5 text-indigo-500" />
-                                Resume (PDF)
+                                Resume (PDF or DOC/DOCX • Max 5MB)
                             </Label>
                             <div className="relative">
                                 <Input
                                     id="file"
                                     name="file"
                                     type="file"
-                                    accept="application/pdf"
+                                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                                     onChange={fileChangeHandler}
                                     className="rounded-xl border-gray-200 border-dashed focus:border-indigo-400 file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 file:text-xs file:font-medium hover:file:bg-indigo-100"
                                 />

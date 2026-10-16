@@ -1,3 +1,42 @@
-.env
+# Dependencies
 node_modules/
 Client/node_modules/
+Server/node_modules/
+
+# Environment Variables
+.env
+.env.*
+!.env.example
+*.env
+Server/.env
+Server/.env.*
+Client/.env
+Client/.env.*
+
+# Build Outputs
+dist/
+dist-ssr/
+Client/dist/
+Client/dist-ssr/
+build/
+
+# Uploads and temporary files
+uploads/
+Server/uploads/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# System and Editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

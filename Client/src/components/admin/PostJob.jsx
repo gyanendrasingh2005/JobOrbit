@@ -4,7 +4,7 @@ import { Label } from '../ui/label'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { useNavigate } from 'react-router-dom'
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import axios from 'axios'
 import { JOB_API_END_POINT } from '@/utils/constant'
@@ -18,7 +18,6 @@ const PostJob = () => {
 
     const { companies } = useSelector(store => store.company)
     const navigate = useNavigate();
-    const dispatch = useDispatch();
 
 
     const [loading, setLoading] = useState(false);
@@ -32,7 +31,43 @@ const PostJob = () => {
         jobType: "",
         position: 0,
         companyId: "",
+        totalRounds: 2,
+        interviewRounds: [
+            { roundNumber: 1, name: "Round 1 (Technical Screening)" },
+            { roundNumber: 2, name: "Round 2 (Final Interview)" },
+        ],
     });
+
+    const handleTotalRoundsChange = (num) => {
+        const count = Math.max(1, Math.min(7, parseInt(num) || 1));
+        const defaultNames = [
+            "Round 1 (Screening)",
+            "Round 2 (Technical)",
+            "Round 3 (System Design)",
+            "Round 4 (Managerial)",
+            "Round 5 (Leadership)",
+            "Round 6 (Culture & Fit)",
+            "Round 7 (Final Review)"
+        ];
+        const newRounds = Array.from({ length: count }, (_, idx) => {
+            const existing = input.interviewRounds[idx];
+            return {
+                roundNumber: idx + 1,
+                name: existing?.name || defaultNames[idx] || `Round ${idx + 1}`,
+            };
+        });
+        setInput({
+            ...input,
+            totalRounds: count,
+            interviewRounds: newRounds,
+        });
+    };
+
+    const handleRoundNameChange = (index, name) => {
+        const updated = [...input.interviewRounds];
+        updated[index] = { ...updated[index], name };
+        setInput({ ...input, interviewRounds: updated });
+    };
 
     const selectChangeHandler = (value) => {
         const selectedCompany = companies.find((company) => company.companyName.toLowerCase() === value.toLowerCase());
@@ -195,6 +230,54 @@ const PostJob = () => {
 
 
 
+                    </div>
+
+                    {/* Recruiter-Configured Interview Rounds */}
+                    <div className="mt-5 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                            <div>
+                                <Label className="text-sm font-bold text-gray-800">
+                                    Hiring & Interview Rounds
+                                </Label>
+                                <p className="text-xs text-gray-500">
+                                    Decide how many interview rounds this opening requires (e.g. 1 to 7 rounds).
+                                </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-gray-600">Total Rounds:</span>
+                                <select
+                                    value={input.totalRounds}
+                                    onChange={(e) => handleTotalRoundsChange(e.target.value)}
+                                    className="px-3 py-1 bg-white border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                >
+                                    <option value={1}>1 Round (Single Stage)</option>
+                                    <option value={2}>2 Rounds (Standard)</option>
+                                    <option value={3}>3 Rounds (Comprehensive)</option>
+                                    <option value={4}>4 Rounds (In-Depth)</option>
+                                    <option value={5}>5 Rounds (Multi-Stage)</option>
+                                    <option value={6}>6 Rounds (Executive)</option>
+                                    <option value={7}>7 Rounds (Full Pipeline)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {/* Configurable Round Names */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                            {input.interviewRounds.map((round, idx) => (
+                                <div key={idx} className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                                    <Label className="text-xs font-semibold text-purple-700 block mb-1">
+                                        Round {idx + 1} Name
+                                    </Label>
+                                    <Input
+                                        type="text"
+                                        value={round.name}
+                                        onChange={(e) => handleRoundNameChange(idx, e.target.value)}
+                                        placeholder={`e.g. Round ${idx + 1}`}
+                                        className="text-xs h-8 focus-visible:ring-1 focus-visible:ring-purple-500"
+                                    />
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
-import { setJobFilter, setSearchedQuery } from '@/redux/jobSlice'
+import { setJobFilter } from '@/redux/jobSlice'
 import {
     Code2,
     Cloud,

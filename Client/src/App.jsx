@@ -1,4 +1,3 @@
-
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import Navbar from './components/shared/Navbar'
 import Login from './components/auth/Login'
@@ -8,6 +7,7 @@ import Jobs from './components/Jobs'
 import Browse from './components/Browse'
 import Profile from './components/Profile'
 import JobDescription from './components/JobDescription'
+import SeekerDashboard from './components/SeekerDashboard'
 import Companies from './components/admin/Companies'
 import CompanyCreate from './components/admin/CompanyCreate'
 import CompanySetup from './components/admin/CompanySetup'
@@ -15,13 +15,11 @@ import AdminJobs from './components/admin/AdminJobs'
 import PostJob from './components/admin/PostJob'
 import JobApplicants from './components/admin/JobApplicants'
 import EditJob from './components/admin/EditJob'
+import RecruiterDashboard from './components/admin/RecruiterDashboard'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 
 const appRouter = createBrowserRouter([
-
-  // for student role
-
-
+  // For student role
   {
     path: '/',
     element: <Home />
@@ -48,11 +46,18 @@ const appRouter = createBrowserRouter([
   },
   {
     path: "/profile",
-    element: <Profile />
+    element: <ProtectedRoute allowedRoles={["student", "recruiter"]}><Profile /></ProtectedRoute>
+  },
+  {
+    path: "/dashboard",
+    element: <ProtectedRoute allowedRoles={["student"]}><SeekerDashboard /></ProtectedRoute>
   },
 
-
-  // for admin role
+  // For admin / recruiter role
+  {
+    path: "/admin/dashboard",
+    element: <ProtectedRoute><RecruiterDashboard /></ProtectedRoute>
+  },
   {
     path: "/admin/companies",
     element: <ProtectedRoute><Companies /></ProtectedRoute>
@@ -81,14 +86,9 @@ const appRouter = createBrowserRouter([
     path: "/admin/jobs/:id/applicants",
     element: <ProtectedRoute><JobApplicants /></ProtectedRoute>
   },
-
-
-
 ])
 
 function App() {
-
-
   return (
     <>
       <RouterProvider router={appRouter} />

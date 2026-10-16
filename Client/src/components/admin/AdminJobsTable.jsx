@@ -60,6 +60,7 @@ const AdminJobsTable = () => {
                     <TableRow>
                         <TableHead>Company Name</TableHead>
                         <TableHead>Role</TableHead>
+                        <TableHead>Applicants</TableHead>
                         <TableHead>Date</TableHead>
                         <TableHead className="text-right">Action</TableHead>
                     </TableRow>
@@ -70,6 +71,16 @@ const AdminJobsTable = () => {
                             <tr key={job._id}>
                                 <TableCell>{job?.company?.companyName}</TableCell>
                                 <TableCell>{job?.title}</TableCell>
+                                <TableCell>
+                                    <button
+                                        onClick={() => navigate(`/admin/jobs/${job._id}/applicants`)}
+                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors cursor-pointer"
+                                        title="View candidate applications"
+                                    >
+                                        <Eye className="w-3 h-3" />
+                                        <span>{job?.applicantCount ?? job?.applications?.length ?? 0}</span>
+                                    </button>
+                                </TableCell>
                                 <TableCell>{job?.createdAt.split("T")[0]}</TableCell>
                                 <TableCell className="text-right">
                                     <Popover>
